@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Query DNS records for subdomains and display their record type and destination IP
+
+audit_dns() {
+    local sub="$1"
+    local dom="$2"
+    # shellcheck disable=SC2086
+    local dig_out
+    dig_out=$(dig +noall +answer "${sub}.${dom}" | awk 'NR==1 {print $4, $5}')
+    if [ -n "$dig_out" ]; then
+        local rectype
+        rectype=$(echo "$dig_out" | awk '{print $1}')
+        local dest
+        dest=$(echo "$dig_out" | awk '{print $2}')
+        echo "The subdomain ${sub} is a ${rectype} record and points to ${dest}"
+    fi
+}
+
+DOMAIN="$1"
+SUBDOMAIN="$2"
+
+if [ -n "$SUBDOMAIN" ]; then
+    audit_dns "$SUBDOMAIN" "$DOMAIN"
+else
+    for sub in www lb-01 web-01 web-02; do
+        audit_dns "$sub" "$DOMAIN"
+    done
+fi

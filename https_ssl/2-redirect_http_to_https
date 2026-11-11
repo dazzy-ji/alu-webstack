@@ -1,0 +1,30 @@
+global
+	log /dev/log	local0
+	log /dev/log	local1 notice
+	chroot /var/lib/haproxy
+	user haproxy
+	group haproxy
+	daemon
+	ca-base /etc/ssl/certs
+	crt-base /etc/ssl/private
+
+defaults
+	log	global
+	mode	http
+	option	httplog
+	option	dontlognull
+	timeout connect 5000
+	timeout client  50000
+	timeout server  50000
+
+frontend haproxy-in
+	bind *:80
+	bind *:443 ssl crt /etc/letsencrypt/live/www.holberton.online/www.holberton.online.pem
+	mode http
+	redirect scheme https if !{ ssl_fc }
+	default_backend haproxy-back
+
+backend haproxy-back
+	balance roundrobin
+	server 7292-web-01 13.40.55.254:80 check
+	server 7292-web-02 18.130.43.202:80 check
